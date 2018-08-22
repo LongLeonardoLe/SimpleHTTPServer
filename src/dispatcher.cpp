@@ -173,7 +173,7 @@ void dispatcher::start_with_epoll() {
         exit(EXIT_FAILURE);
     }
 
-    // Start all threads
+    // Start all threads, continuously waiting for connections
     for (int i = 0; i < 1; ++i) {
         Poco::RunnableAdapter<dispatcher> runnable(*this, &dispatcher::run_with_epoll);
         _thread_pool.start(runnable);
@@ -215,6 +215,7 @@ void dispatcher::run_with_epoll() {
                 conn_fd = accept(_master_socket, (struct sockaddr *) &_address, (socklen_t *) & _addrlen);
 
                 // Re-arm the master_socket since it is using EPOLLONESHOT
+                ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
                 ev.data.fd = _master_socket;
                 epoll_ctl(_epollfd, EPOLL_CTL_MOD, _master_socket, &ev);
 
